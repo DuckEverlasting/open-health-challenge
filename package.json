@@ -9,7 +9,6 @@
     "build": "webpack -p"
   },
   "dependencies": {
-    "echarts": "^4.9.0",
     "echarts-stat": "^1.1.1",
     "webpack": "^4.44.1"
   },

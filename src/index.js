@@ -1,10 +1,10 @@
 import data from './data.json';
-import echarts from 'echarts';
-import ecStat from 'echarts-stat'
+import {init} from './echarts.min';
+import {regression} from 'echarts-stat'
 
 // initialize echarts instance with prepared DOM
-const scatterChart = echarts.init(document.getElementById('graph1'));
-const regressionChart = echarts.init(document.getElementById('graph2'));
+const scatterChart = init(document.getElementById('graph1'));
+const regressionChart = init(document.getElementById('graph2'));
 const stepData = data.steps_per_day.map((el, i) => [i+1, el]);
 const systData = data.blood_pressure_data.map(el => [el.day_index + 1, el.systolic]);
 const diasData = data.blood_pressure_data.map(el => [el.day_index + 1, el.diastolic]);
@@ -27,9 +27,9 @@ function filterForReg(data) {
     })
 }
 
-const stepRegression = ecStat.regression('polynomial', stepData, 10);
-const systRegression = ecStat.regression('polynomial', filterForReg(systData), 10);
-const diasRegression = ecStat.regression('polynomial', filterForReg(diasData), 10);
+const stepRegression = regression('polynomial', stepData, 10);
+const systRegression = regression('polynomial', filterForReg(systData), 10);
+const diasRegression = regression('polynomial', filterForReg(diasData), 10);
 
 const getMonth = value => {
     value /= 30
