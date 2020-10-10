@@ -1,0 +1,22 @@
+{
+  "name": "open-health-challenge",
+  "version": "0.0.1",
+  "private": true,
+  "author": "Matt Klein <mklein246@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "webpack-dev-server --open",
+    "build": "webpack -p"
+  },
+  "dependencies": {
+    "echarts": "^4.9.0",
+    "echarts-stat": "^1.1.1",
+    "webpack": "^4.44.1"
+  },
+  "devDependencies": {
+    "file-loader": "^6.0.0",
+    "url-loader": "^4.1.0",
+    "webpack-cli": "^3.3.12",
+    "webpack-dev-server": "^3.11.0"
+  }
+}
