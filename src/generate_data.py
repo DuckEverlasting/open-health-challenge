@@ -46,8 +46,8 @@ def generate_data():
     for i in range(random.randrange(5 * 50, 5 * 54)):
         day = random.randrange(0, 365)
         expected_syst = (1 - equation(day - 14)) * seed_bp
-        systolic = random.gauss(expected_syst, expected_syst * .07)
-        diastolic = get_diastolic(systolic)
+        systolic = round(random.gauss(expected_syst, expected_syst * .07))
+        diastolic = round(get_diastolic(systolic))
         generated["blood_pressure_data"].append({
             "day_index": day,
             "month": days[day].month,
