@@ -2,105 +2,59 @@ import data from './data.json';
 import { init } from './echarts.min';
 import { regression } from 'echarts-stat';
 import { Color } from "./enums";
-import { colorSpan } from "./helpers";
+import { xAxisFormatter, tooltipFormatter } from "./textFormat";
+import { getMinMax } from "./helpers";
 
-// initialize echarts instance with prepared DOM
-const scatterChart = init(document.getElementById('graph1'));
-const stepData = data.steps_per_day.map((el, i) => [i + 1, el]);
-const systData = data.blood_pressure_data.map((el) => [
-  el.day_index + 1,
-  el.systolic,
-]);
-const diasData = data.blood_pressure_data.map((el) => [
-  el.day_index + 1,
-  el.diastolic,
-]);
-const dayZero = new Date("Jan 1, 2020");
+// initialize echarts instance
+const chart = init(document.getElementById('chart')),
+  // parse data
+  stepData = data.steps_per_day.map((el, i) => [el.date, el.steps]),
+  systData = data.blood_pressure_data.map((el) => [
+    el.date,
+    el.systolic,
+    el.day_index
+  ]),
+  diasData = data.blood_pressure_data.map((el) => [
+    el.date,
+    el.diastolic,
+    el.day_index
+  ]),
+  // get min/max steps (for use in determining left y-axis limits)
+  [ minStep, maxStep ] = getMinMax(data.steps_per_day, "steps"),
+  minStepAxis = 2000 * Math.floor(minStep / 2000),
+  maxStepAxis = 2000 * Math.ceil(maxStep / 2000);
 
 function filterForReg(data) {
   const res = {};
   data.forEach((datum) => {
     if (!res[datum[0]]) {
-      res[datum[0]] = [datum[1].toFixed(1)]; // Convert to fixed point "float" here because the regression fails otherwise.
+      res[datum[2]] = [datum[1].toFixed(0)]; // Convert to fixed point "float" here because the regression fails otherwise.
     } else {
-      res[datum[0]].push([datum[1].toFixed(1)]);
+      res[datum[2]].push([datum[1].toFixed(0)]);
     }
   });
   return Object.entries(res).map(([day, arr]) => {
     const sum = (acc, curr) => acc + curr;
-    return [parseInt(day), arr.reduce(sum) / arr.length];
+    return [day, arr.reduce(sum) / arr.length];
   });
 }
 
-const stepRegression = regression('polynomial', stepData, 5);
+const stepRegression = regression('polynomial', stepData.map((el, i) => [i, el[1]]), 5);
 const systRegression = regression('polynomial', filterForReg(systData), 5);
 const diasRegression = regression('polynomial', filterForReg(diasData), 5);
 
-const getMonth = (value) => {
-  value /= 30;
-  return [ 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' ][Math.round(value)];
-};
-
-function tooltipFormatter(data) {
-  if (!data.length) {
-    return
-  }
-  const dayIndex = data[0].axisValue;
-
-  let numOfSteps = null,
-    systolic = [],
-    diastolic = []
-
-  data.forEach(datum => {
-    if (datum.seriesId === "steps") {
-      numOfSteps = datum.value[1]
-    } else if (datum.seriesId === "systolic") {
-      systolic.push(datum.value[1])
-    } else if (datum.seriesId === "diastolic") {
-      diastolic.push(datum.value[1])
-    }
-  });
-
-  const date = new Date(dayZero);
-  date.setDate(date.getDate() + dayIndex);
-
-  let text = `
-    <span style="font-weight:bold">
-      ${date.toDateString().slice(4)}
-    </span>
-  `;
-
-  if (numOfSteps !== null) {
-    text += `
-      <br />
-      Steps: ${colorSpan(numOfSteps, Color.LIGHTORANGE)}
-    `;
-  }
-
-  if (systolic.length) {
-    text += `
-      <br />
-      BP Readings:
-    `
-    for (let i = 0; i < systolic.length; i++) {
-      text += `
-        <br />
-        ${colorSpan(systolic[i], Color.LIGHTBLUE)}
-        /
-        ${colorSpan(diastolic[i], Color.LIGHTGREEN)}
-        mm Hg
-      `;
-    }
-  }
-
-  return text
-}
-
-scatterChart.setOption({
+chart.setOption({
+  grid: {
+    containLabel: true
+  },
   title: {
+    textAlign: "center",
+    left: "middle",
     text: 'Blood Pressure vs. Steps per Day',
   },
-  legend: {},
+  legend: {
+    top: 35
+  },
   tooltip: {
     trigger: 'axis',
     axisPointer: {
@@ -112,26 +66,57 @@ scatterChart.setOption({
     backgroundColor: 'rgba(50,50,50,0.9)',
     formatter: tooltipFormatter,
   },
-  xAxis: {
-    interval: 30.4,
-    min: 1,
-    max: 365,
-    axisLabel: { formatter: getMonth },
+  xAxis: [{
+    type: 'time',
+    name: 'Date',
+    nameLocation: "center",
+    nameTextStyle: {
+      fontWeight: "bold",
+    },
+    nameGap: 30,
+    boundaryGap: true,
+    axisTick: {
+      alignWithLabel: true
+    },
+    axisLabel: {
+      formatter: xAxisFormatter,
+      showMinLabel: false,
+      showMaxLabel: false
+    },
     axisPointer: {
       label: {
         show: false,
       },
     },
+    min: stepData[0][0],
+    max: stepData[stepData.length - 1][0],
     splitLine: {
       show: false,
     },
+    splitNumber: 12
   },
+  {
+    type: 'value',
+    show: false,
+    axisPointer: {
+      show: false
+    },
+    min: 0,
+    max: stepData.length
+  }],
   yAxis: [
     {
       name: 'Steps',
-      splitLine: 10,
-      min: '500',
-      max: '10000',
+      nameLocation: "center",
+      nameTextStyle: {
+        fontWeight: "bold",
+      },
+      nameGap: 55,
+      min: minStepAxis,
+      max: maxStepAxis,
+      splitLine: {
+        show: false
+      },
       axisPointer: {
         show: false,
         label: {
@@ -141,9 +126,18 @@ scatterChart.setOption({
     },
     {
       name: 'Blood Pressure',
-      splitLine: 10,
-      min: '60',
-      max: '200',
+      nameLocation: "center",
+      nameTextStyle: {
+        fontWeight: "bold",
+      },
+      nameGap: 40,
+      nameRotate: 270,
+      splitLine: {
+        show: false
+      },
+      min: 30,
+      max: 210,
+      scale: true,
       axisPointer: {
         show: false,
         label: {
@@ -157,7 +151,7 @@ scatterChart.setOption({
       name: 'Steps',
       id: 'steps',
       type: 'scatter',
-      symbolSize: 6,
+      symbolSize: 5,
       itemStyle: {
         color: Color.ORANGE,
         opacity: 0.3,
@@ -174,7 +168,7 @@ scatterChart.setOption({
       id: 'systolic',
       yAxisIndex: 1,
       type: 'scatter',
-      symbolSize: 6,
+      symbolSize: 5,
       itemStyle: {
         color: Color.BLUE,
         opacity: 0.3,
@@ -191,7 +185,7 @@ scatterChart.setOption({
       id: 'diastolic',
       yAxisIndex: 1,
       type: 'scatter',
-      symbolSize: 6,
+      symbolSize: 5,
       itemStyle: {
         color: Color.GREEN,
         opacity: 0.3,
@@ -204,7 +198,9 @@ scatterChart.setOption({
       data: diasData,
     },
     {
+      name: 'Steps',
       type: 'line',
+      xAxisIndex: 1,
       id: 'steps-regression',
       smooth: true,
       symbol: 'none',
@@ -216,9 +212,11 @@ scatterChart.setOption({
       },
       itemStyle: {
         color: 'transparent',
-      },
+      }
     },
     {
+      name: 'Systolic Pressure',
+      xAxisIndex: 1,
       yAxisIndex: 1,
       type: 'line',
       id: 'systolic-regression',
@@ -232,9 +230,11 @@ scatterChart.setOption({
       },
       itemStyle: {
         color: 'transparent',
-      },
+      }
     },
     {
+      name: 'Diastolic Pressure',
+      xAxisIndex: 1,
       yAxisIndex: 1,
       type: 'line',
       id: 'diastolic-regression',
@@ -251,8 +251,11 @@ scatterChart.setOption({
       },
       itemStyle: {
         color: 'transparent',
-      },
+      }
     },
   ],
 });
 
+chart.on('legendselectchanged', function (params) {
+  console.log(params);
+});
