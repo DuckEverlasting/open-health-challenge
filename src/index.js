@@ -2,12 +2,13 @@ import data from './data.json';
 import { init } from './echarts.min';
 import { regression } from 'echarts-stat';
 import { Color } from "./enums";
-import { xAxisFormatter, tooltipFormatter } from "./textFormat";
-import { getMinMax } from "./helpers";
+import { xAxisFormatter, tooltipFormatter } from "./format";
+import { getMinMax, filterForReg } from "./helpers";
 
-// initialize echarts instance
+// Initialize echarts instance
 const chart = init(document.getElementById('chart')),
-  // parse data
+
+// Parse data
   stepData = data.steps_per_day.map((el, i) => [el.date, el.steps]),
   systData = data.blood_pressure_data.map((el) => [
     el.date,
@@ -19,30 +20,18 @@ const chart = init(document.getElementById('chart')),
     el.diastolic,
     el.day_index
   ]),
-  // get min/max steps (for use in determining left y-axis limits)
+
+// Calculate step limits for y-axis
   [ minStep, maxStep ] = getMinMax(data.steps_per_day, "steps"),
   minStepAxis = 2000 * Math.floor(minStep / 2000),
   maxStepAxis = 2000 * Math.ceil(maxStep / 2000);
 
-function filterForReg(data) {
-  const res = {};
-  data.forEach((datum) => {
-    if (!res[datum[0]]) {
-      res[datum[2]] = [datum[1].toFixed(0)]; // Convert to fixed point "float" here because the regression fails otherwise.
-    } else {
-      res[datum[2]].push([datum[1].toFixed(0)]);
-    }
-  });
-  return Object.entries(res).map(([day, arr]) => {
-    const sum = (acc, curr) => acc + curr;
-    return [day, arr.reduce(sum) / arr.length];
-  });
-}
-
+// Get regression data
 const stepRegression = regression('polynomial', stepData.map((el, i) => [i, el[1]]), 5);
 const systRegression = regression('polynomial', filterForReg(systData), 5);
 const diasRegression = regression('polynomial', filterForReg(diasData), 5);
 
+// Set options for echarts instance
 chart.setOption({
   grid: {
     containLabel: true
@@ -55,6 +44,9 @@ chart.setOption({
   legend: {
     top: 35
   },
+  // Note: instance uses axisPointer along x-axis to handle all display of data.
+  // This ensures that all data points from selected day will be seen.
+  // See tooltipFormatter for more details.
   tooltip: {
     trigger: 'axis',
     axisPointer: {
@@ -67,6 +59,7 @@ chart.setOption({
     formatter: tooltipFormatter,
   },
   xAxis: [{
+    // X-axis used by all scatter plot data. Time based, and formatted to display months.
     type: 'time',
     name: 'Date',
     nameLocation: "center",
@@ -74,7 +67,6 @@ chart.setOption({
       fontWeight: "bold",
     },
     nameGap: 30,
-    boundaryGap: true,
     axisTick: {
       alignWithLabel: true
     },
@@ -96,6 +88,7 @@ chart.setOption({
     splitNumber: 12
   },
   {
+    // X-axis used by regression data (which requires numerical values). Invisible.
     type: 'value',
     show: false,
     axisPointer: {
@@ -106,6 +99,7 @@ chart.setOption({
   }],
   yAxis: [
     {
+      // Y-axis used by step data, seen on the left side of the chart.
       name: 'Steps',
       nameLocation: "center",
       nameTextStyle: {
@@ -125,6 +119,7 @@ chart.setOption({
       },
     },
     {
+      // Y-axis handling bp levels, seen on the right side of the chart.
       name: 'Blood Pressure',
       nameLocation: "center",
       nameTextStyle: {
@@ -147,11 +142,13 @@ chart.setOption({
     },
   ],
   series: [
+    // Scatter plots
     {
       name: 'Steps',
       id: 'steps',
       type: 'scatter',
       symbolSize: 5,
+      silent: true,
       itemStyle: {
         color: Color.ORANGE,
         opacity: 0.3,
@@ -169,6 +166,7 @@ chart.setOption({
       yAxisIndex: 1,
       type: 'scatter',
       symbolSize: 5,
+      silent: true,
       itemStyle: {
         color: Color.BLUE,
         opacity: 0.3,
@@ -186,6 +184,7 @@ chart.setOption({
       yAxisIndex: 1,
       type: 'scatter',
       symbolSize: 5,
+      silent: true,
       itemStyle: {
         color: Color.GREEN,
         opacity: 0.3,
@@ -197,21 +196,18 @@ chart.setOption({
       },
       data: diasData,
     },
+    // Regression lines
     {
       name: 'Steps',
       type: 'line',
       xAxisIndex: 1,
       id: 'steps-regression',
-      smooth: true,
       symbol: 'none',
       data: stepRegression.points,
       silent: true,
       lineStyle: {
         color: Color.ORANGE,
         width: 3,
-      },
-      itemStyle: {
-        color: 'transparent',
       }
     },
     {
@@ -220,16 +216,12 @@ chart.setOption({
       yAxisIndex: 1,
       type: 'line',
       id: 'systolic-regression',
-      smooth: true,
       symbol: 'none',
       data: systRegression.points,
       silent: true,
       lineStyle: {
         color: Color.BLUE,
         width: 3,
-      },
-      itemStyle: {
-        color: 'transparent',
       }
     },
     {
@@ -238,24 +230,13 @@ chart.setOption({
       yAxisIndex: 1,
       type: 'line',
       id: 'diastolic-regression',
-      smooth: true,
       symbol: 'none',
       data: diasRegression.points,
       silent: true,
       lineStyle: {
         color: Color.GREEN,
         width: 3,
-      },
-      encode: {
-        tooltip: '',
-      },
-      itemStyle: {
-        color: 'transparent',
       }
     },
   ],
-});
-
-chart.on('legendselectchanged', function (params) {
-  console.log(params);
 });
