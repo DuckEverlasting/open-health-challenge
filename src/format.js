@@ -2,16 +2,6 @@ import { colorSpan } from "./helpers";
 import { Color } from "./enums";
 
 /**
- * Takes in a timestamp and returns the relevant month in string format.
- * 
- * @param {number} value - timestamp 
- */
-export function xAxisFormatter(value) {
-  const months = [ 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' ]
-  return months[new Date(value).getMonth()]
-}
-
-/**
  * Parses axisPointer data and returns a formatted string.
  * 
  * @param {array} data 

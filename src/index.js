@@ -2,7 +2,7 @@ import data from './data.json';
 import { init } from './echarts.min';
 import { regression } from 'echarts-stat';
 import { Color } from "./enums";
-import { xAxisFormatter, tooltipFormatter } from "./format";
+import { tooltipFormatter } from "./format";
 import { getMinMax, filterForReg } from "./helpers";
 
 // Initialize echarts instance
@@ -62,8 +62,14 @@ chart.setOption({
     {
       // X-axis used to display month markers accurately. Not actually hooked up to any data.
       type: 'category',
+      name: 'Date',
+      nameLocation: "center",
+      nameGap: 30,
       axisPointer: {
         show: false
+      },
+      nameTextStyle: {
+        fontWeight: "bold",
       },
       axisTick: {
         alignWithLabel: true
@@ -74,19 +80,7 @@ chart.setOption({
       // X-axis used by scatter plot data. Time based, and formatted to display months.
       // Only axis that allows axisPointer data. Otherwise invisible.
       type: 'time',
-      name: 'Date',
       show: false,
-      nameLocation: "center",
-      nameTextStyle: {
-        fontWeight: "bold",
-      },
-      nameGap: 30,
-
-      axisLabel: {
-        formatter: xAxisFormatter,
-        showMinLabel: false,
-        showMaxLabel: false
-      },
       axisPointer: {
         label: {
           show: false,
@@ -94,10 +88,6 @@ chart.setOption({
       },
       min: stepData[0][0],
       max: stepData[stepData.length - 1][0],
-      splitLine: {
-        show: false,
-      },
-      splitNumber: 12
     },
     {
       // X-axis used by regression data (which requires numerical values). Invisible.
