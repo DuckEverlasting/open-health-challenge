@@ -55,48 +55,61 @@ chart.setOption({
         type: 'dashed',
       },
     },
-    backgroundColor: 'rgba(50,50,50,0.9)',
+    backgroundColor: 'rgba(50, 50, 50, 0.9)',
     formatter: tooltipFormatter,
   },
-  xAxis: [{
-    // X-axis used by all scatter plot data. Time based, and formatted to display months.
-    type: 'time',
-    name: 'Date',
-    nameLocation: "center",
-    nameTextStyle: {
-      fontWeight: "bold",
+  xAxis: [
+    {
+      // X-axis used to display month markers accurately. Not actually hooked up to any data.
+      type: 'category',
+      axisPointer: {
+        show: false
+      },
+      axisTick: {
+        alignWithLabel: true
+      },
+      data: [ 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' ]
     },
-    nameGap: 30,
-    axisTick: {
-      alignWithLabel: true
-    },
-    axisLabel: {
-      formatter: xAxisFormatter,
-      showMinLabel: false,
-      showMaxLabel: false
-    },
-    axisPointer: {
-      label: {
+    {
+      // X-axis used by scatter plot data. Time based, and formatted to display months.
+      // Only axis that allows axisPointer data. Otherwise invisible.
+      type: 'time',
+      name: 'Date',
+      show: false,
+      nameLocation: "center",
+      nameTextStyle: {
+        fontWeight: "bold",
+      },
+      nameGap: 30,
+
+      axisLabel: {
+        formatter: xAxisFormatter,
+        showMinLabel: false,
+        showMaxLabel: false
+      },
+      axisPointer: {
+        label: {
+          show: false,
+        },
+      },
+      min: stepData[0][0],
+      max: stepData[stepData.length - 1][0],
+      splitLine: {
         show: false,
       },
+      splitNumber: 12
     },
-    min: stepData[0][0],
-    max: stepData[stepData.length - 1][0],
-    splitLine: {
+    {
+      // X-axis used by regression data (which requires numerical values). Invisible.
+      type: 'value',
       show: false,
-    },
-    splitNumber: 12
-  },
-  {
-    // X-axis used by regression data (which requires numerical values). Invisible.
-    type: 'value',
-    show: false,
-    axisPointer: {
-      show: false
-    },
-    min: 0,
-    max: stepData.length
-  }],
+      axisPointer: {
+        show: false
+      },
+      min: 0,
+      max: stepData.length
+    }
+  ],
   yAxis: [
     {
       // Y-axis used by step data, seen on the left side of the chart.
@@ -146,6 +159,7 @@ chart.setOption({
     {
       name: 'Steps',
       id: 'steps',
+      xAxisIndex: 1,
       type: 'scatter',
       symbolSize: 5,
       silent: true,
@@ -163,6 +177,7 @@ chart.setOption({
     {
       name: 'Systolic Pressure',
       id: 'systolic',
+      xAxisIndex: 1,
       yAxisIndex: 1,
       type: 'scatter',
       symbolSize: 5,
@@ -181,6 +196,7 @@ chart.setOption({
     {
       name: 'Diastolic Pressure',
       id: 'diastolic',
+      xAxisIndex: 1,
       yAxisIndex: 1,
       type: 'scatter',
       symbolSize: 5,
@@ -200,7 +216,7 @@ chart.setOption({
     {
       name: 'Steps',
       type: 'line',
-      xAxisIndex: 1,
+      xAxisIndex: 2,
       id: 'steps-regression',
       symbol: 'none',
       data: stepRegression.points,
@@ -212,7 +228,7 @@ chart.setOption({
     },
     {
       name: 'Systolic Pressure',
-      xAxisIndex: 1,
+      xAxisIndex: 2,
       yAxisIndex: 1,
       type: 'line',
       id: 'systolic-regression',
@@ -226,7 +242,7 @@ chart.setOption({
     },
     {
       name: 'Diastolic Pressure',
-      xAxisIndex: 1,
+      xAxisIndex: 2,
       yAxisIndex: 1,
       type: 'line',
       id: 'diastolic-regression',
