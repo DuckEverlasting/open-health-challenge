@@ -67,22 +67,24 @@ def generate_data():
     Data is approximated based off a generated set of equations, and is loosely selected via gaussian distribution
     around said equations.
     """
-    generated = {"steps_per_day": [], "blood_pressure_data": []}
-    days = get_days_list(2020)
+    generated = {"steps_per_day": [], "blood_pressure_data": [], "dates": []}
+    year = 2020
+    days = get_days_list(year)
     equations = get_equations()
 
     seed_bp = random.gauss(126, 5)
     seed_steps = random.gauss(6000, 1000)
 
+    generated["dates"] = [day.isoformat() for day in days]
+
     for i in range(random.randrange(5 * 50, 5 * 54)):
-        day = random.randrange(0, 366)
+        day = random.randrange(0, 366 if year % 4 else 365)
         # Note: expected bp value is shifted back 7 days to simulate changes in bp lagging changes in exercise  
         expected_syst = (1 + equations["bp"](day - 7)) * seed_bp
         systolic = round(random.gauss(expected_syst, expected_syst * .07))
         diastolic = round(get_diastolic(systolic))
         generated["blood_pressure_data"].append({
-            "day_index": day,
-            "date": days[day].isoformat(),
+            "date": day,
             "systolic": systolic,
             "diastolic": diastolic
         })
@@ -95,10 +97,7 @@ def generate_data():
         steps = max(steps, min_steps, 0)  # no negative step counts!
         if date.weekday() > 5:
             steps = round(steps * 1.2)   # assumes slightly more activity on weekends
-        generated["steps_per_day"].append({
-            "date": date.isoformat(),
-            "steps": steps
-        })
+        generated["steps_per_day"].append(steps)
     return generated
 
 

@@ -10,17 +10,14 @@ export function colorSpan(text, color) {
 }
 
 /**
- * Returns the minimum and maximum value of an array. Includes option to
- * point to relevant data in an array of objects.
+ * Returns the minimum and maximum value of an array.
  * 
  * @param {array} array - data to parse
- * @param {string} [attribute] - if array contains objects, sets the attribute from which to pull data
  */
-export function getMinMax(array, attribute=null) {
+export function getMinMax(array) {
   let min = Infinity,
     max = -Infinity
-  array.forEach(el => {
-    const num = !!attribute ? el[attribute] : el;
+  array.forEach(num => {
     if (typeof num !== "number") {
       throw new TypeError();
     }
@@ -45,13 +42,13 @@ export function filterForReg(data) {
   const res = {};
   data.forEach((datum) => {
     if (!res[datum[0]]) {
-      res[datum[2]] = [datum[1].toFixed(0)]; // Convert to fixed point "float" here because the regression fails otherwise.
+      res[datum[0]] = [datum[1]];
     } else {
-      res[datum[2]].push([datum[1].toFixed(0)]);
+      res[datum[0]].push(datum[1]);
     }
   });
   return Object.entries(res).map(([day, arr]) => {
     const sum = (acc, curr) => acc + curr;
-    return [day, arr.reduce(sum) / arr.length];
+    return [parseInt(day), arr.reduce(sum) / arr.length];
   });
 }
