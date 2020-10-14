@@ -2,8 +2,7 @@ import { init } from '../echarts.min';
 import { regression } from 'echarts-stat';
 import { Color } from "../enums";
 import { tooltipFormatter } from "../format";
-import { filterForReg } from "../helpers";
-
+import { filterForReg, getDateIndex } from "../helpers";
 
 export class StepBPChart {
   constructor(element, data) {
@@ -11,20 +10,14 @@ export class StepBPChart {
     this.chart = init(element);
     this.idCount = 0;
 
-    // Store date info
-    this.dateIndex = data.dates;
+    // Store first day of year
+    this.startDate = data.start_date;
 
     // Parse data
     this.initializeData(data);
 
     // Set options for echarts instance
     this.refreshConfig();
-  }
-
-  getId() {
-    const id = this.idCount;
-    this.idCount++;
-    return id;
   }
 
   refreshConfig() {
@@ -41,38 +34,31 @@ export class StepBPChart {
   }
 
   initializeData(data) {
-    this.stepData = data.steps_per_day.map((steps, i) => [i, steps]);
-    this.bpDataDict = {}
-    data.blood_pressure_data.forEach(el => {
-      this.bpDataDict[this.getId()] = {
-        date: el.date,
-        syst: el.systolic,
-        dias: el.diastolic,
-      }
-    });
-    this.reconcileData();
+    this.stepData = data.steps_per_day.map(el => [el.day, el.steps, el.timestamp]);
+    console.log(data.steps_per_day)
+    this.systData = data.blood_pressure_data.map(el => [
+      el.day,
+      el.systolic,
+      el.timestamp
+    ]);
+    this.diasData = data.blood_pressure_data.map(el => [
+      el.day,
+      el.diastolic,
+      el.timestamp
+    ]);
+    this.calculateRegressionData();
   }
 
-  async reconcileData(datasets = ["step", "bp"]) {
+  async calculateRegressionData(datasets = ["step", "bp"]) {
     if (datasets.includes("step")) {
       this.stepRegressionData = regression(
         'polynomial', this.stepData.map((el, i) => [i, el[1]]), 5
       );
     }
     if (datasets.includes("bp")) {
-      this.systData = Object.keys(this.bpDataDict).map(id => [
-        this.bpDataDict[id].date,
-        this.bpDataDict[id].syst,
-        id
-      ]);
       this.systRegressionData = regression(
         'polynomial', filterForReg(this.systData), 5
       );
-      this.diasData = Object.keys(this.bpDataDict).map(id => [
-        this.bpDataDict[id].date,
-        this.bpDataDict[id].dias,
-        id
-      ]);
       this.diasRegressionData = regression(
         'polynomial', filterForReg(this.diasData), 5
       );
@@ -80,27 +66,41 @@ export class StepBPChart {
   }
 
   addBPData(...data) {
-    data.forEach(([date, syst, dias]) => {
-      this.bpDataDict[this.getId()] = {
-        date,
+    data.forEach(([date, time, syst, dias]) => {
+      const timestamp = Date.parse(date + "T" + time + "Z"),
+        dateIndex = getDateIndex(timestamp);
+      this.systData.push([
+        dateIndex,
         syst,
-        dias
-      }
+        timestamp
+      ]);
+      this.diasData.push([
+        dateIndex,
+        dias,
+        timestamp
+      ]);
     })
-    this.reconcileData(["bp"]);
+    this.calculateRegressionData(["bp"]);
     this.refreshConfig();
   }
 
-  deleteBPData(...ids) {
-    ids.forEach(id => {
-      if (this.bpDataDict[id]) {
+  deleteBPData(...indecies) {
+    let changesMade = false;
+    indecies.forEach(i => {
+      if (this.systData[i] && this.systData[i][0] !== null) {
         // Clears out the data point instead of deleting it.
         // This stops echarts from "scrambling" the points when the array shifts.
-        this.bpDataDict[id] = [null, null, null]
+        this.systData[i] = [null, null, null];
+        this.diasData[i] = [null, null, null];
+        if (!changesMade) {
+          changesMade = true;
+        };
       }
     })
-    this.reconcileData(["bp"]);
-    this.refreshConfig();
+    if (changesMade) {
+      this.calculateRegressionData(["bp"]);
+      this.refreshConfig();
+    }
   }
 
   editStepData(...data) {
@@ -109,7 +109,7 @@ export class StepBPChart {
         this.stepData[index][1] = newSteps;
       }
     })
-    this.reconcileData(["step"]);
+    this.calculateRegressionData(["step"]);
     this.refreshConfig();
   }
 
@@ -117,24 +117,18 @@ export class StepBPChart {
     const res = {}
     if (datasets.includes("step")) {
       res.step = this.stepData.map(el => ({
-        date: this.dateIndex[el[0]],
+        timestamp: el[2],
         steps: el[1]
       }));
     }
     if (datasets.includes("bp")) {
-      res.bp = Object.values(this.bpDataDict)
-        .sort((a, b) => a.date - b.date)
-        .map(el => ({
-          date: this.dateIndex[el.date],
-          syst: el.syst,
-          dias: el.dias
+      res.bp = this.systData.map((el, i) => ({
+        timestamp: el[2],
+        syst: el[1],
+        dias: this.diasData[i][1]
       }));
     }
     return res;
-  }
-
-  formatTooltip(...data) {
-    return tooltipFormatter(this.dateIndex, ...data)
   }
 
   getGridOptions() {
@@ -170,7 +164,7 @@ export class StepBPChart {
         },
       },
       backgroundColor: 'rgba(50, 50, 50, 0.9)',
-      formatter: this.formatTooltip.bind(this),
+      formatter: tooltipFormatter,
     }
   }
 
@@ -263,6 +257,7 @@ export class StepBPChart {
         xAxisIndex: 1,
         type: 'scatter',
         symbolSize: 5,
+        silent: true,
         itemStyle: {
           color: Color.ORANGE,
           opacity: 0.3,
@@ -281,6 +276,7 @@ export class StepBPChart {
         yAxisIndex: 1,
         type: 'scatter',
         symbolSize: 5,
+        silent: true,
         itemStyle: {
           color: Color.BLUE,
           opacity: 0.3,
@@ -299,6 +295,7 @@ export class StepBPChart {
         yAxisIndex: 1,
         type: 'scatter',
         symbolSize: 5,
+        silent: true,
         itemStyle: {
           color: Color.GREEN,
           opacity: 0.3,

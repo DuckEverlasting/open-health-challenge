@@ -4,8 +4,8 @@ import sys, datetime, json, math, random
 def get_days_list(year):
     """Returns list of date objects for a given year"""
     days = []
-    start = datetime.date(year, 1, 1)
-    end = datetime.date(year + 1, 1, 1)
+    start = datetime.datetime(year, 1, 1)
+    end = datetime.datetime(year + 1, 1, 1)
 
     for i in range((end - start).days):
         day = start + datetime.timedelta(days=i)
@@ -67,7 +67,7 @@ def generate_data():
     Data is approximated based off a generated set of equations, and is loosely selected via gaussian distribution
     around said equations.
     """
-    generated = {"steps_per_day": [], "blood_pressure_data": [], "dates": []}
+    generated = {"steps_per_day": [], "blood_pressure_data": [], "start_date": ""}
     year = 2020
     days = get_days_list(year)
     equations = get_equations()
@@ -75,16 +75,20 @@ def generate_data():
     seed_bp = random.gauss(126, 5)
     seed_steps = random.gauss(6000, 1000)
 
-    generated["dates"] = [day.isoformat() for day in days]
+    generated["start_date"] = days[0].date().isoformat()
 
     for i in range(random.randrange(5 * 50, 5 * 54)):
-        day = random.randrange(0, 366 if year % 4 else 365)
+        day_index = random.randrange(0, 366 if year % 4 else 365)
+        day = days[day_index]
+        # Adds time of day (assuming bp readings are taken between 6am and midnight) and converts to js timestamp
+        timestamp = (day.timestamp() + (random.randrange(64800) + 16200)) * 1000
         # Note: expected bp value is shifted back 7 days to simulate changes in bp lagging changes in exercise  
-        expected_syst = (1 + equations["bp"](day - 7)) * seed_bp
+        expected_syst = (1 + equations["bp"](day_index - 7)) * seed_bp
         systolic = round(random.gauss(expected_syst, expected_syst * .07))
         diastolic = round(get_diastolic(systolic))
         generated["blood_pressure_data"].append({
-            "date": day,
+            "day": day_index,
+            "timestamp": timestamp,
             "systolic": systolic,
             "diastolic": diastolic
         })
@@ -97,7 +101,12 @@ def generate_data():
         steps = max(steps, min_steps, 0)  # no negative step counts!
         if date.weekday() > 5:
             steps = round(steps * 1.2)   # assumes slightly more activity on weekends
-        generated["steps_per_day"].append(steps)
+        generated["steps_per_day"].append({
+          "day": i,
+          "steps": steps,
+          # Convert to js timestamp
+          "timestamp": days[i].timestamp() * 1000
+        })
     return generated
 
 

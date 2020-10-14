@@ -6,18 +6,14 @@ import { Color } from "./enums";
  * 
  * @param {array} data 
  */
-export function tooltipFormatter(dateIndex, data) {
+export function tooltipFormatter(data) {
   if (!data.length) {
     return
   }
   
-  // Gets date object from string.
-  // Note: timezone offset is appended to value to ensure correct date is processed.
-  const dateString = dateIndex[data[0].value[0]],
-    date = new Date(dateString),
-    tzOffset = date.getTimezoneOffset() * 60000,
-    utcDate = new Date(date.valueOf() + tzOffset);
-
+  // Gets date object from timestamp.
+  const date = new Date(data[0].value[2]);
+  
   let numOfSteps = null,
     systolic = [],
     diastolic = []
@@ -36,7 +32,7 @@ export function tooltipFormatter(dateIndex, data) {
   // Adds date formatted for locale.
   let text = `
     <span style="font-weight:bold">
-      ${utcDate.toLocaleDateString()}
+      ${date.toLocaleDateString()}
     </span>
   `;
 

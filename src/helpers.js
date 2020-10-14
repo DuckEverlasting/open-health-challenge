@@ -52,3 +52,9 @@ export function filterForReg(data) {
     return [parseInt(day), arr.reduce(sum) / arr.length];
   });
 }
+
+export function getDateIndex(date) {
+  const end = new Date(date),
+    start = new Date(end.getFullYear(), 0, 0);
+  return Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+}
