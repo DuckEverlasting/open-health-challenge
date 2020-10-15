@@ -12,11 +12,89 @@
     <div class="graph-container">
       <div id="chart"></div>
     </div>
-    <div>
-      <button id="debug1">DEBUG1</button>
-      <button id="debug2">DEBUG2</button>
-      <button id="debug3">DEBUG3</button>
-      <button id="debug4">DEBUG4</button>
+    <div class="input-section">
+      <div id="display">
+        <h3 class="header">DATE GOES HERE</h3>
+        <div class="display-steps">
+          <h4>Steps taken:</h4>
+          <p class="steps-taken"></p>
+        </div>
+        <div>
+          <h4>Blood Pressure Readings:</h4>
+          <div class="bp-list"></div>
+        </div>
+      </div>
+      <div class="controls">
+        <form id="change-date-form">
+          <h4>Change Date</h4>
+          <div>
+            <label for="date-input">Date:</label>
+            <input
+              id="date-input"
+              type="date"
+              value="2020-01-01"
+              data-min="2020-01-01"
+              data-max="2020-12-31"
+            >
+            <button>Submit</button>
+          </div>
+        </form>
+        <div class="edit-add-forms">
+          <form id="change-steps-form">
+            <h4>Change Steps Taken</h4>
+            <div>
+              <label for="step-input">Steps:</label>
+              <input
+                id="step-input"
+                type="number"
+                data-min=0
+                data-integer=true
+              >
+              <button>Submit</button>
+            </div>
+          </form>
+          <form id="add-bp-form">
+            <h4>Add Blood Pressure Reading</h4>
+            <div>
+              <label for="time-input">Time:</label>
+              <input id="time-input" type="time">
+            </div>
+            <div>
+              <label for="systolic-input">Systolic:</label>
+              <input
+                id="systolic-input"
+                type="number"
+                data-min=40
+                data-max=200
+                data-integer=true
+              >
+              <label for="diastolic-input">Diastolic:</label>
+              <input
+                id="diastolic-input"
+                type="number"
+                data-min=0
+                data-max=180
+                data-integer=true
+              >
+            </div>
+            <button>Submit</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="table-section">
+      <div class="table">
+        <h4>Steps Taken</h4>
+        <div class="table-wrapper">
+          <div id="step-table-1" class="table-content step"></div>
+        </div>
+      </div>
+      <div class="table">
+        <h4>Blood Pressure</h4>
+        <div class="table-wrapper">
+          <div id="bp-table-1" class="table-content bp"></div>
+        </div>
+      </div>
     </div>
     <script src="main.js"></script>
   </body>

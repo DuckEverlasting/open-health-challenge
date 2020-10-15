@@ -4,8 +4,8 @@ import sys, datetime, json, math, random
 def get_days_list(year):
     """Returns list of date objects for a given year"""
     days = []
-    start = datetime.datetime(year, 1, 1)
-    end = datetime.datetime(year + 1, 1, 1)
+    start = datetime.datetime(year, 1, 1, tzinfo=datetime.timezone.utc)
+    end = datetime.datetime(year + 1, 1, 1, tzinfo=datetime.timezone.utc)
 
     for i in range((end - start).days):
         day = start + datetime.timedelta(days=i)

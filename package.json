@@ -9,6 +9,7 @@
     "build": "webpack -p"
   },
   "dependencies": {
+    "dayjs": "^1.9.3",
     "echarts-stat": "^1.1.1",
     "webpack": "^4.44.1"
   },

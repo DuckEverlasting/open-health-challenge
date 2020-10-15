@@ -1,4 +1,4 @@
-import { colorSpan } from "./helpers";
+import { colorSpan, timestampToUtcDate } from "./helpers";
 import { Color } from "./enums";
 
 /**
@@ -12,11 +12,12 @@ export function tooltipFormatter(data) {
   }
   
   // Gets date object from timestamp.
-  const date = new Date(data[0].value[2]);
+  const utcDate = timestampToUtcDate(data[0].value[2]);
   
   let numOfSteps = null,
     systolic = [],
-    diastolic = []
+    diastolic = [],
+    time = []
 
   // Collects and sorts data along axis. Ignores data from regression lines.
   data.forEach(datum => {
@@ -24,6 +25,7 @@ export function tooltipFormatter(data) {
       numOfSteps = datum.value[1]
     } else if (datum.seriesId === "systolic") {
       systolic.push(datum.value[1])
+      time.push(datum.value[2])
     } else if (datum.seriesId === "diastolic") {
       diastolic.push(datum.value[1])
     }
@@ -32,7 +34,7 @@ export function tooltipFormatter(data) {
   // Adds date formatted for locale.
   let text = `
     <span style="font-weight:bold">
-      ${date.toLocaleDateString()}
+      ${utcDate.toLocaleDateString()}
     </span>
   `;
 
@@ -71,6 +73,9 @@ export function tooltipFormatter(data) {
     for (let i = 0; i < l; i++) {
       text += `
         <br />
+        ${timestampToUtcDate(time[i]).toLocaleTimeString(
+          [], { hour: "numeric", minute: "numeric" } 
+        )}: 
         ${parseBpText(i)}
         mm Hg
       `;

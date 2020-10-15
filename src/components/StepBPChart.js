@@ -2,13 +2,16 @@ import { init } from '../echarts.min';
 import { regression } from 'echarts-stat';
 import { Color } from "../enums";
 import { tooltipFormatter } from "../format";
-import { filterForReg, getDateIndex } from "../helpers";
+import { filterForReg, getDateIndex, getTimestamp } from "../helpers";
 
 export class StepBPChart {
   constructor(element, data) {
     // Initialize echarts instance
     this.chart = init(element);
     this.idCount = 0;
+
+    // Initialize observer array
+    this.observers = [];
 
     // Store first day of year
     this.startDate = data.start_date;
@@ -18,6 +21,11 @@ export class StepBPChart {
 
     // Set options for echarts instance
     this.refreshConfig();
+
+    // Add resize listener
+    window.addEventListener("resize", () => {
+      this.resize();
+    });
   }
 
   refreshConfig() {
@@ -35,7 +43,6 @@ export class StepBPChart {
 
   initializeData(data) {
     this.stepData = data.steps_per_day.map(el => [el.day, el.steps, el.timestamp]);
-    console.log(data.steps_per_day)
     this.systData = data.blood_pressure_data.map(el => [
       el.day,
       el.systolic,
@@ -66,9 +73,10 @@ export class StepBPChart {
   }
 
   addBPData(...data) {
+    console.log(data);
     data.forEach(([date, time, syst, dias]) => {
-      const timestamp = Date.parse(date + "T" + time + "Z"),
-        dateIndex = getDateIndex(timestamp);
+      const dateIndex = getDateIndex(date, time),
+        timestamp = getTimestamp(date, time);
       this.systData.push([
         dateIndex,
         syst,
@@ -79,61 +87,92 @@ export class StepBPChart {
         dias,
         timestamp
       ]);
-    })
+    });
     this.calculateRegressionData(["bp"]);
+    this.observers.forEach(o => o.onDataChange("bp"));
     this.refreshConfig();
   }
 
   deleteBPData(...indecies) {
     let changesMade = false;
     indecies.forEach(i => {
-      if (this.systData[i] && this.systData[i][0] !== null) {
+      if (this.systData[i]) {
         // Clears out the data point instead of deleting it.
         // This stops echarts from "scrambling" the points when the array shifts.
-        this.systData[i] = [null, null, null];
-        this.diasData[i] = [null, null, null];
-        if (!changesMade) {
-          changesMade = true;
-        };
+        this.systData[i] = null;
+        this.diasData[i] = null;
+        changesMade = true;
       }
-    })
+    });
     if (changesMade) {
       this.calculateRegressionData(["bp"]);
+      this.observers.forEach(o => o.onDataChange("bp"));
       this.refreshConfig();
     }
   }
 
+  // // not implemented
+  // editBPData(...data) {
+  //   data.forEach(([index, newSyst, newDias]) => {
+  //     if (this.systData[index]) {
+  //       this.systData[index][1] = newSyst;
+  //       this.diasData[index][1] = newDias;
+  //       changesMade = true;
+  //     }
+  //   });
+  //   if (changesMade) {
+  //     this.calculateRegressionData(["bp"]);
+  //     this.observers.forEach(o => o.onDataChange("bp"));
+  //     this.refreshConfig();
+  //   }
+  // }
+
   editStepData(...data) {
+    let changesMade = false;
     data.forEach(([index, newSteps]) => {
       if (this.stepData[index]) {
         this.stepData[index][1] = newSteps;
+        changesMade = true;
       }
-    })
-    this.calculateRegressionData(["step"]);
-    this.refreshConfig();
+    });
+    if (changesMade) {
+      this.calculateRegressionData(["step"]);
+      this.observers.forEach(o => o.onDataChange("step"));
+      this.refreshConfig();
+    }
   }
 
-  exportData(datasets = ["step", "bp"]) {
-    const res = {}
-    if (datasets.includes("step")) {
-      res.step = this.stepData.map(el => ({
-        timestamp: el[2],
-        steps: el[1]
-      }));
+  subscribe(observer) {
+    this.observers.push(observer);
+  }
+
+  unsubscribe(observer) {
+    const index = this.observers.indexOf(observer);
+    if (index >= 0) {
+      this.observers.splice(index, 1);
     }
-    if (datasets.includes("bp")) {
-      res.bp = this.systData.map((el, i) => ({
-        timestamp: el[2],
-        syst: el[1],
-        dias: this.diasData[i][1]
-      }));
-    }
-    return res;
+  }
+
+  resize() {
+    this.chart.setOption({ animation: false });
+    this.chart.resize();
+    this.chart.setOption({ animation: true });
+  }
+
+  destroy() {
+    window.removeEventListener("resize", this.chart.resize);
+    this.chart.dispose();
+    const clone = this.element.cloneNode(false);
+    this.element.parentNode.replaceChild(clone, this.element);
   }
 
   getGridOptions() {
     return {
-      containLabel: true
+      containLabel: true,
+      left: 40,
+      right: 40,
+      bottom: 30,
+      top: 55
     }
   }
 
@@ -142,6 +181,7 @@ export class StepBPChart {
       textAlign: "center",
       left: "middle",
       text: 'Blood Pressure vs. Steps per Day',
+      padding: [15, 0, 0, 0]
     }
   }
 
