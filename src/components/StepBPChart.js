@@ -2,7 +2,7 @@ import { init } from '../echarts.min';
 import { regression } from 'echarts-stat';
 import { Color } from "../enums";
 import { tooltipFormatter } from "../format";
-import { filterForReg, getDateIndex, getTimestamp } from "../helpers";
+import { filterForReg, getDateIndex, getUTCTimestamp } from "../helpers";
 
 export class StepBPChart {
   constructor(element, data) {
@@ -73,10 +73,9 @@ export class StepBPChart {
   }
 
   addBPData(...data) {
-    console.log(data);
     data.forEach(([date, time, syst, dias]) => {
       const dateIndex = getDateIndex(date, time),
-        timestamp = getTimestamp(date, time);
+        timestamp = getUTCTimestamp(date, time);
       this.systData.push([
         dateIndex,
         syst,

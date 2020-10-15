@@ -16,14 +16,12 @@ export class StepTable extends Table {
   }
 
   // override
-  initColumns() {
-    return [
-      { key: 'date', name: 'Date' },
-      { key: 'steps', name: 'Steps' },
+  initProps() {
+    this.type = "step";
+    this.columns = [
+      { key: 'date', name: 'Date', sortable: true },
+      { key: 'steps', name: 'Steps', sortable: true },
     ];
-  }
-
-  getType() {
-    return "step";
+    this.sortBy = "date";
   }
 }

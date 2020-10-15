@@ -6,6 +6,9 @@ div {
 html {
   background:white;
 }
+h1, h2, h3, h4, p, span, label {
+  font-family: sans-serif;
+}
 body {
   display: flex;
   flex-flow: row wrap;
@@ -18,12 +21,12 @@ form {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 15px 0;
+  margin-bottom: 5px;
 }
 input {
   height: 1.5em;
-  margin: 10px;
-  margin-left: 3px;
+  margin: 2px 5px 2px 3px;
+  padding: 1px 2px;
 }
 input[type=date] {
   width: 10em;
@@ -34,7 +37,18 @@ input[type=time] {
 input[type=number] {
   width: 5em;
 }
+button {
+  cursor: pointer;
+}
+h3 {
+  margin: 0;
+}
 h4 {
+  margin: 0;
+  padding: 0;
+  white-space: nowrap;
+}
+p {
   margin: 0;
 }
 .input-section {
@@ -49,35 +63,71 @@ h4 {
   height: 30vw;
   min-height: 400px;
   max-height: 600px;
-  padding: 10px 0 30px;
+  padding: 10px 0;
   margin-bottom: 30px;
 }
 #display {
   text-align: center;
   display: flex;
+  flex-grow: 1;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
+  min-height: 0px;
+  margin-bottom: 15px;
+}
+.display-data {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px 15px;
+  margin-top: 10px;
+  color: white;
+  background: rgb(46, 46, 46);
+  min-height: 0px;
+  width: 290px;
+}
+.display-data h4, .display-steps p {
+  margin-bottom: 5px;
 }
 .display-steps {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-end;
+  margin: 5px 0 3px;
+}
+#display label {
+  font-weight: bold;
 }
 .bp-list {
   background: rgb(216, 216, 216);
-  padding: 5px;
-  width: 200px;
+  padding: 0 5px;
+  width: 100%;
+  flex-grow: 1;
+  overflow-y: scroll;
+  min-height: 10px;
+}
+.bp-list-border {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgb(216, 216, 216);
+  padding: 1px;
+  width: 240px;
+  flex-grow: 1;
   min-height: 10px;
 }
 .bp-list-entry {
   display: flex;
   justify-content: space-between;
-  padding: 3px;
+  align-items: center;
+  padding: 5px;
   margin: 10px;
-  background: white;
-}
-.bp-list-entry p {
-  margin: 0;
+  color: white;
+  background: rgb(46, 46, 46);
 }
 .bp-list-entry button {
   display: flex;
@@ -93,10 +143,30 @@ h4 {
   flex-direction: column;
   align-items: center;
 }
+#change-date-form {
+  flex-direction: row;
+}
 .edit-add-forms {
-  width: 80%;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  align-items: stretch;
+  width: 80%;
+}
+.edit-add-forms form {
+  box-sizing: border-box;
+  border: 1px solid black;
+  border-right: none;
+  padding: 3px 8px;
+}
+.edit-add-forms form:last-of-type {
+  border-right: 1px solid black;
+}
+.edit-add-forms form div {
+  display: flex;
+  align-items: center;
+}
+.edit-add-forms button {
+  margin: 3px;
 }
 .table-section {
   display: flex;
@@ -124,6 +194,7 @@ h4 {
   column-gap: 1px;
   padding-right: 1px;
   height: 300px;
+  min-height: 0;
   overflow-y: scroll;
 }
 .table-content.step {
@@ -134,13 +205,20 @@ h4 {
 }
 .table-content .header {
   position: sticky;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   top: 0;
   font-weight: bold;
   border-bottom: 1px solid black;
+  user-select: none;
 }
 .table-content .cell, .table-content .header {
   padding: 2px 10px;
   background: white;
+}
+.sort-arrow {
+  font-size: 12px;
 }
 .graph-container {
   position: relative;

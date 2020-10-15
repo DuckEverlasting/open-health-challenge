@@ -6,42 +6,63 @@ class ValidationError extends Error {
 }
 
 function validateNumber(element) {
+  const name = element.name ? ` (${element.name})` : "";
+  const generic = `Number input error${name}:\n`
   // Check for input value
   if (element.value === "") {
-    throw new ValidationError("Please enter a number");
+    throw new ValidationError(generic + "Please enter a number");
   }
   const { min, max, integer } = element.dataset,
     val = Number(element.value);
 
   // Check parameters
   if (min && val < min) {
-    throw new ValidationError(`Value must be greater than ${min}`);
+    throw new ValidationError(generic + `Value must be greater than ${min}`);
   }
   else if (max && val > max) {
-    throw new ValidationError(`Value must be less than ${max}`);
+    throw new ValidationError(generic + `Value must be less than ${max}`);
   }
   else if (integer && val % 1 !== 0) {
-    throw new ValidationError("Value must be a whole number");
+    throw new ValidationError(generic + "Value must be a whole number");
   }
 }
 
+function getDateObject(dateString) {
+  const [ year, month, day ] = dateString.split("-");
+  return new Date(year, month - 1, day);
+}
+
 function validateDate(element) {
+  const name = element.name ? ` (${element.name})` : "";
+  const generic = `Date input error${name}:\n`
+  
   // Check for input value
   if (element.value === "") {
-    throw new ValidationError("Please select a date");
+    throw new ValidationError(generic + "Please select a date");
   }
 
-  const { min, max } = element.dataset,
-    minDate = min ? new Date(min) : null,
-    maxDate = max ? new Date(max) : null,
-    valDate = new Date(element.value);
+  const { min, max } = element.dataset;
+  let minDate, minString, maxDate, maxString;
+  if (min) {
+    minDate = getDateObject(min);
+    minString = minDate.toLocaleDateString(
+      [], { year: "numeric", month: "long", day: "numeric" }
+    );
+  }
+  if (max) {
+    maxDate = getDateObject(max);
+    maxString = maxDate.toLocaleDateString(
+      [], { year: "numeric", month: "long", day: "numeric" }
+    );
+  }
+  const valDate = getDateObject(element.value);
 
   // Check parameters
   if (minDate && valDate < minDate) {
-    throw new ValidationError(`Date cannot be earlier than ${min}`)
+    throw new ValidationError(generic + `Date cannot be earlier than ${minString}`)
   }
   else if (maxDate && valDate > maxDate) {
-    throw new ValidationError(`Date cannot be later than ${max}`)
+    throw new ValidationError(generic + `Date cannot be later than ${maxString}`)
   }
 }
 

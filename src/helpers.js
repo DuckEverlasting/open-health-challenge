@@ -64,17 +64,12 @@ export function filterForReg(data) {
 }
 
 export function getDateIndex(dateString, timeString="00:00") {
-  console.log(dateString, timeString);
-
   const end = getUtcDate(dateString, timeString),
     start = dayjs.utc({y: end.year(), M: 0, d: 0});
-  console.log(end.toISOString());
-  console.log(start.toISOString());
-  console.log(end.diff(start, "day"));
   return end.diff(start, "day");
 }
 
-export function getTimestamp(dateString, timeString="00:00") {
+export function getUTCTimestamp(dateString, timeString="00:00") {
   return getUtcDate(dateString, timeString).valueOf();
 }
 
@@ -90,7 +85,7 @@ function getUtcDate(dateString, timeString="00:00") {
   });
 }
 
-export function timestampToUtcDate(ts) {
+export function getUtcDateFromTimestamp(ts) {
   const date = new Date(ts),
     offset = date.getTimezoneOffset() * 60000;
   return new Date(date.valueOf() + offset);

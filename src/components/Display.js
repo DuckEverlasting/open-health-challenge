@@ -1,4 +1,5 @@
-import { getDateIndex } from '../helpers';
+import { getDateIndex, colorSpan, getUTCTimestamp, getUtcDateFromTimestamp } from '../helpers';
+import { Color } from "../enums";
 import withValidate from '../validate';
 
 class BPListEntry {
@@ -8,12 +9,17 @@ class BPListEntry {
     this.chart = chart;
     this.div = document.createElement("div");
     this.div.className = "bp-list-entry";
-    const text = document.createElement("p");
-    text.textContent = `${this.data.time}: ${this.data.syst}/${this.data.dias}`;
-    this.div.appendChild(text);
     const deleteButton = document.createElement("button");
-    deleteButton.textContent = "❌";
     deleteButton.onclick = this.callDelete.bind(this);
+    deleteButton.textContent = "❌" 
+    this.div.innerHTML = `
+      <p>
+        ${this.data.time}: 
+        ${colorSpan(this.data.syst, Color.LIGHTBLUE)}
+        /
+        ${colorSpan(this.data.dias, Color.LIGHTGREEN)}
+      </p>
+    `;
     this.div.appendChild(deleteButton);
     this.element.appendChild(this.div);
   }
@@ -35,10 +41,18 @@ export class Display {
     this.stepsTakenElement = this.container.querySelector(".steps-taken");
     this.bpListElement = this.container.querySelector(".bp-list");
     this.dateInput = document.getElementById("date-input");
+    this.stepDateInput = document.getElementById("date-input-steps");
     this.stepInput = document.getElementById("step-input");
+    this.bpDateInput = document.getElementById("date-input-bp");
     this.timeInput = document.getElementById("time-input");
     this.systInput = document.getElementById("systolic-input");
     this.diasInput = document.getElementById("diastolic-input");
+
+    // Subscribe to data changes
+    this.chart.subscribe(this);
+
+    // Setting this within JS to keep consistent with the enum value
+    this.stepsTakenElement.style.color = Color.LIGHTORANGE;
     
     const changeDateForm = document.getElementById("change-date-form"),
       changeStepsForm = document.getElementById("change-steps-form"),
@@ -53,6 +67,11 @@ export class Display {
 
   update() {
     this.setData(this.getDataFromDate(this.getCurrentDate()));
+  }
+
+  // Listening to this.chart
+  onDataChange() {
+    this.update();
   }
 
   getCurrentDate() {
@@ -74,11 +93,14 @@ export class Display {
         });
       }
     });
-    return { date, steps, bpData }
+    return { steps, bpData }
   }
 
   setData(data) {
-    this.headerElement.textContent = data.date;
+    const currentDateObj = getUtcDateFromTimestamp(getUTCTimestamp(this.getCurrentDate()));
+    this.headerElement.textContent = "Selected Date: " + currentDateObj.toLocaleDateString(
+      [], { year: "numeric", month: "long", day: "numeric" }
+    );
     this.stepsTakenElement.textContent = data.steps;
     const newList = this.bpListElement.cloneNode(false);
     this.bpListElement.parentNode.replaceChild(newList, this.bpListElement);
@@ -92,35 +114,39 @@ export class Display {
     e.preventDefault();
     withValidate(this.dateInput, () => {
       this.currentDate = this.dateInput.value;
+      this.bpDateInput.value = this.dateInput.value;
+      this.stepDateInput.value = this.dateInput.value;
       this.update();
     });
   }
 
   handleEditSteps(e) {
     e.preventDefault();
-    withValidate(this.stepInput, () => {
+    withValidate([this.stepDateInput, this.stepInput], () => {
       this.chart.editStepData([
-        getDateIndex(this.getCurrentDate()),
+        getDateIndex(this.stepDateInput.value),
         this.stepInput.value
       ]);
-      this.update();
     });
   }
 
   handleAddBP(e) {
     e.preventDefault();
-    withValidate([this.systInput, this.diasInput], () => {
+    withValidate([this.bpDateInput, this.systInput, this.diasInput], () => {
       this.chart.addBPData([
-        this.getCurrentDate(),
+        this.bpDateInput.value,
         this.timeInput.value, // Not validated, since there are no unacceptable entries
         Number(this.systInput.value),
         Number(this.diasInput.value)
       ]);
-      this.timeInput.value = "";
+      this.timeInput.value = "12:00";
       this.systInput.value = "";
       this.diasInput.value = "";
-      this.update();
     });
+  }
+
+  destroy() {
+    this.chart.unsubscribe(this);
   }
 }
 

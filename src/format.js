@@ -1,4 +1,4 @@
-import { colorSpan, timestampToUtcDate } from "./helpers";
+import { colorSpan, getUtcDateFromTimestamp } from "./helpers";
 import { Color } from "./enums";
 
 /**
@@ -12,7 +12,7 @@ export function tooltipFormatter(data) {
   }
   
   // Gets date object from timestamp.
-  const utcDate = timestampToUtcDate(data[0].value[2]);
+  const utcDate = getUtcDateFromTimestamp(data[0].value[2]);
   
   let numOfSteps = null,
     systolic = [],
@@ -73,7 +73,7 @@ export function tooltipFormatter(data) {
     for (let i = 0; i < l; i++) {
       text += `
         <br />
-        ${timestampToUtcDate(time[i]).toLocaleTimeString(
+        ${getUtcDateFromTimestamp(time[i]).toLocaleTimeString(
           [], { hour: "numeric", minute: "numeric" } 
         )}: 
         ${parseBpText(i)}
