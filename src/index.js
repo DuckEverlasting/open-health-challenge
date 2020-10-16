@@ -14,3 +14,5 @@ const chart = new StepBPChart(document.getElementById('chart'), data),
   stepTable = new StepTable(stepTableElement, chart),
   bpTable = new BPTable(bpTableElement, chart),
   display = new Display(displayContainer, chart);
+
+  chart.chart.on("")
