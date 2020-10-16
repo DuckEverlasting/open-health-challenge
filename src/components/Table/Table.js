@@ -1,16 +1,25 @@
+/**
+ * Abstract class for handling data tables 
+ *
+ * @class Table
+ */
 export class Table {
   constructor(grid, chart) {
     this.grid = grid;
     this.chart = chart;
+    // Subscribe to data changes
     this.chart.subscribe(this);
+    // Sets class attributes specific to subclasses (Called here because the attributes are needed before super() is finished).
     this.initProps();
     this.sortAscending = true;
+    // Get initial data
     this.data = this.refreshData();
+    // Update DOM
     this.populate();
   }
 
-  // Listening to this.chart
   onDataChange(type) {
+    // Listening to chart instance
     if (type && type !== this.type) {
       return;
     }
@@ -18,9 +27,15 @@ export class Table {
     this.populate();
   }
 
+  /**
+   * Called whenever data or sort parameters change. Calls Table.sort and updates DOM. 
+   *
+   * @memberof Table
+   */
   populate() {
     this.sort();
     const newGrid = this.grid.cloneNode(false);
+    // Symbol to denote current sort state.
     const sortArrow = document.createElement("div");
     sortArrow.className = "sort-arrow";
     sortArrow.innerHTML = this.sortAscending ? "&#x25B2;" : "&#x25BC;";
@@ -42,7 +57,11 @@ export class Table {
     this.data.forEach((datum) => {
       this.columns.forEach((col) => {
         const cell = document.createElement("div");
-        cell.className = "cell";
+        if (typeof datum[col.key] === "number") {
+          cell.className = "cell num";
+        } else {
+          cell.className = "cell";
+        }
         cell.textContent = datum[col.key];
         newGrid.appendChild(cell);
       });
@@ -52,6 +71,12 @@ export class Table {
     this.grid = newGrid;
   }
 
+  /**
+   * Called whenever a sortable header element is clicked.
+   *
+   * @param {string} parameter
+   * @memberof Table
+   */
   setSortBy(parameter) {
     if (this.sortBy === parameter) {
       this.sortAscending = !this.sortAscending;
@@ -62,17 +87,25 @@ export class Table {
     this.populate();
   }
 
+  /**
+   * Sorts table data according to current settings.
+   * 
+   * @throws {TypeError}
+   * @memberof Table
+   */
   sort() {
     if (!this.data[0]) {
       return;
     }
     const op = this.sortAscending ? 1 : -1;
     if (this.sortBy === "date") {
+      // Unique sorting function for time-based sort
       this.data = this.data.sort((a, b) => op * (a.timestamp - b.timestamp));
     } else if (typeof this.data[0][this.sortBy] === "number") {
       this.data = this.data.sort((a, b) => op * (a[this.sortBy] - b[this.sortBy]));
     } else {
-      throw new TypeError("Sort called with parameter that is not date or number")
+      // This should not happen.
+      throw new TypeError("Sort called with parameter that is not date or number");
     }
   }
 
@@ -82,10 +115,6 @@ export class Table {
 
   initProps() {
     throw new Error("Method initColumns not implemented");
-  }
-
-  getType() {
-    throw new Error("Method getType not implemented");
   }
 
   destroy() {

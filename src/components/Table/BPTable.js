@@ -1,5 +1,11 @@
 import { Table } from './Table';
 
+/**
+ * Subclass of Table. Builds blood pressure data table.
+ *
+ * @class BPTable
+ * @extends {Table}
+ */
 export class BPTable extends Table {
   // override
   refreshData() {

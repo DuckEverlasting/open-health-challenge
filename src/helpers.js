@@ -63,14 +63,39 @@ export function filterForReg(data) {
   });
 }
 
-export function getDateIndex(dateString, timeString="00:00") {
-  const end = getUtcDate(dateString, timeString),
+/**
+ * Takes in a date string and returns the day of year it occurs on.
+ *
+ * @param {string} dateString Format: yyyy-mm-dd (same as used by the Date input)
+ * @return {number} Integer representing the day of the year the datestring falls on  
+ */
+export function getDateIndex(dateString) {
+  const end = getUtcDate(dateString),
     start = dayjs.utc({y: end.year(), M: 0, d: 0});
   return end.diff(start, "day");
 }
 
+/**
+ * Takes in a date string and an optional time string and returns a UTC-formatted timestamp. 
+ *
+ * @param {string} dateString Format: yyyy-mm-dd (same as used by the Date input)
+ * @param {string} [timeString="00:00"] Format: hh:mm (same as used by the Time input)
+ * @return {number} Timestamp for the given date/time formatted to UTC
+ */
 export function getUTCTimestamp(dateString, timeString="00:00") {
   return getUtcDate(dateString, timeString).valueOf();
+}
+
+/**
+ * Takes in a timestamp and returns a UTC Date object.
+ * 
+ * @param {number} ts Timestamp
+ * @return {Date}
+ */
+export function getUtcDateFromTimestamp(ts) {
+  const date = new Date(ts),
+    offset = date.getTimezoneOffset() * 60000;
+  return new Date(date.valueOf() + offset);
 }
 
 function getUtcDate(dateString, timeString="00:00") {
@@ -85,8 +110,3 @@ function getUtcDate(dateString, timeString="00:00") {
   });
 }
 
-export function getUtcDateFromTimestamp(ts) {
-  const date = new Date(ts),
-    offset = date.getTimezoneOffset() * 60000;
-  return new Date(date.valueOf() + offset);
-}

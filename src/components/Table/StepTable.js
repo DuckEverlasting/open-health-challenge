@@ -1,5 +1,11 @@
 import { Table } from './Table';
 
+/**
+ * Subclass of Table. Builds step data table.
+ *
+ * @class StepTable
+ * @extends {Table}
+ */
 export class StepTable extends Table {
   // override
   refreshData() {

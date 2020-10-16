@@ -198,10 +198,10 @@ p {
   overflow-y: scroll;
 }
 .table-content.step {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 70px;
 }
 .table-content.bp {
-  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr .9fr .9fr;
 }
 .table-content .header {
   position: sticky;
@@ -216,6 +216,9 @@ p {
 .table-content .cell, .table-content .header {
   padding: 2px 10px;
   background: white;
+}
+.table-content .cell.num {
+  text-align: right;
 }
 .sort-arrow {
   font-size: 12px;

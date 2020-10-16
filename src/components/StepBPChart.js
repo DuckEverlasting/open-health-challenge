@@ -2,13 +2,18 @@ import { init } from '../echarts.min';
 import { regression } from 'echarts-stat';
 import { Color } from "../enums";
 import { tooltipFormatter } from "../format";
-import { filterForReg, getDateIndex, getTimestamp } from "../helpers";
+import { filterForReg, getDateIndex, getUTCTimestamp } from "../helpers";
 
+/**
+ * Class handling the implementation of the echarts instance. Also serves as the source of truth for 
+ * data in the app.
+ *
+ * @class StepBPChart
+ */
 export class StepBPChart {
   constructor(element, data) {
     // Initialize echarts instance
     this.chart = init(element);
-    this.idCount = 0;
 
     // Initialize observer array
     this.observers = [];
@@ -28,6 +33,12 @@ export class StepBPChart {
     });
   }
 
+  /**
+   * Builds the option object for echarts instance, then sets it.
+   * Called whenever settings change. (Generally data)
+   *
+   * @memberof StepBPChart
+   */
   refreshConfig() {
     this.config = {
       grid: this.getGridOptions(),
@@ -41,6 +52,12 @@ export class StepBPChart {
     this.chart.setOption({...this.config});
   }
 
+  /**
+   * Called at initialization to parse through JSON data.
+   *
+   * @param {Object} data JSON file created by generate_data.py.
+   * @memberof StepBPChart
+   */
   initializeData(data) {
     this.stepData = data.steps_per_day.map(el => [el.day, el.steps, el.timestamp]);
     this.systData = data.blood_pressure_data.map(el => [
@@ -56,7 +73,14 @@ export class StepBPChart {
     this.calculateRegressionData();
   }
 
-  async calculateRegressionData(datasets = ["step", "bp"]) {
+  /**
+   * Calculates regression data for the line charts in echart instance.
+   * Called every time scatter plot data changes.
+   *
+   * @param {string} [datasets=["step", "bp"]] Can specify which datasets need to be updated
+   * @memberof StepBPChart
+   */
+  calculateRegressionData(datasets = ["step", "bp"]) {
     if (datasets.includes("step")) {
       this.stepRegressionData = regression(
         'polynomial', this.stepData.map((el, i) => [i, el[1]]), 5
@@ -72,10 +96,16 @@ export class StepBPChart {
     }
   }
 
+  /**
+   * Adds one (or multiple) blood pressure data points to the chart.
+   *
+   * @param {...[date: string, time: string, syst: number, dias: number]} data
+   * @memberof StepBPChart
+   */
   addBPData(...data) {
     data.forEach(([date, time, syst, dias]) => {
-      const dateIndex = getDateIndex(date, time),
-        timestamp = getTimestamp(date, time);
+      const dateIndex = getDateIndex(date),
+        timestamp = getUTCTimestamp(date, time);
       this.systData.push([
         dateIndex,
         syst,
@@ -88,16 +118,25 @@ export class StepBPChart {
       ]);
     });
     this.calculateRegressionData(["bp"]);
+    // Fires onDataChange function for observers
     this.observers.forEach(o => o.onDataChange("bp"));
     this.refreshConfig();
   }
 
+  /**
+   * Removes one (or more) blood pressure data points from the chart.
+   *
+   * @param {...number} indecies Indexes to clear from the data arrays.
+   * @memberof StepBPChart
+   */
   deleteBPData(...indecies) {
     let changesMade = false;
     indecies.forEach(i => {
       if (this.systData[i]) {
-        // Clears out the data point instead of deleting it.
+        // Nulls out the data point instead of deleting it.
         // This stops echarts from "scrambling" the points when the array shifts.
+        // Similarly, the above method inserts new points to the end of the array
+        // rather than inserting then into an order.
         this.systData[i] = null;
         this.diasData[i] = null;
         changesMade = true;
@@ -105,6 +144,7 @@ export class StepBPChart {
     });
     if (changesMade) {
       this.calculateRegressionData(["bp"]);
+      // Fires onDataChange function for observers
       this.observers.forEach(o => o.onDataChange("bp"));
       this.refreshConfig();
     }
@@ -126,6 +166,12 @@ export class StepBPChart {
   //   }
   // }
 
+  /**
+   * Changes the step count for one (or more) points in the chart.
+   *
+   * @param {...[index: number, newSteps: number]} data
+   * @memberof StepBPChart
+   */
   editStepData(...data) {
     let changesMade = false;
     data.forEach(([index, newSteps]) => {
@@ -136,6 +182,7 @@ export class StepBPChart {
     });
     if (changesMade) {
       this.calculateRegressionData(["step"]);
+      // Fires onDataChange function for observers
       this.observers.forEach(o => o.onDataChange("step"));
       this.refreshConfig();
     }
@@ -153,6 +200,7 @@ export class StepBPChart {
   }
 
   resize() {
+    // Turns animation off while resizing to help optimize performance.
     this.chart.setOption({ animation: false });
     this.chart.resize();
     this.chart.setOption({ animation: true });
