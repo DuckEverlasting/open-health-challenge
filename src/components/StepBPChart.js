@@ -1,23 +1,13 @@
-// include ECharts main module
-const echarts = require('echarts/lib/echarts');
-// include scatter
-require('echarts/lib/chart/scatter');
-// include line
-require('echarts/lib/chart/line');
-// include tooltip and title component
-require('echarts/lib/component/tooltip');
-require('echarts/lib/component/legend');
-require('echarts/lib/component/title');
-
+import { init } from '../echarts.min';
 import { regression } from 'echarts-stat';
 import { Color } from "../enums";
 import { tooltipFormatter } from "../format";
-import { filterForReg, getDateIndex, getUTCTimestamp } from "../helpers";
+import { filterForReg, getDateIndex, getTimestamp } from "../helpers";
 
 export class StepBPChart {
   constructor(element, data) {
     // Initialize echarts instance
-    this.chart = echarts.init(element);
+    this.chart = init(element);
     this.idCount = 0;
 
     // Initialize observer array
@@ -85,7 +75,7 @@ export class StepBPChart {
   addBPData(...data) {
     data.forEach(([date, time, syst, dias]) => {
       const dateIndex = getDateIndex(date, time),
-        timestamp = getUTCTimestamp(date, time);
+        timestamp = getTimestamp(date, time);
       this.systData.push([
         dateIndex,
         syst,
