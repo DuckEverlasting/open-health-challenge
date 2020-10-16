@@ -1,3 +1,5 @@
+https://mklein-open-health-challenge.netlify.app/
+
 Challenge: create a component using the echarts api.
 
 The component should be a graph comparing data blood pressure data to number of steps walked over time.
